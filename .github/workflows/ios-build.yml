@@ -1,0 +1,32 @@
+name: Build IPS App
+on:
+	push:
+	  branches: [ "main", "master"]
+jobs:
+	build:
+	  runs-on: macos-latest
+	steps
+	  - name: Checkout Code
+	    uses: actions/checkout@v4
+
+	  - name: Setup Node.js
+	    uses: actions/setup-node@v4
+	    with:
+	       node-version: 18
+
+	  - name: Install dependencies & Build Web
+	    run: |
+	      npm install
+	      npm run build
+
+	  - name: Setup Capacitoe IOS
+	    run: |
+	      cd frontend
+	      npx cap sync ios
+
+	  - name: Build IOS App (Debug)
+	    run: |
+	      cd frontend/android
+	      cd ../ios/App
+	      xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+

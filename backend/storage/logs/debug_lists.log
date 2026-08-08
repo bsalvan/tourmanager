@@ -1,0 +1,7 @@
+2026-07-29 15:57:26 - Raw: [2,3] | Formatted: [{"id":2,"type":"contact"},{"id":3,"type":"contact"}]
+2026-07-29 16:05:03 - Raw: [2,3] | Formatted: [{"id":2,"type":"user"},{"id":3,"type":"user"}]
+2026-07-29 16:05:49 - Raw: [2,1] | Formatted: [{"id":2,"type":"user"},{"id":1,"type":"user"}]
+2026-07-29 16:17:08 - Raw: [2,3] | Formatted: [{"id":2,"type":"user"},{"id":3,"type":"user"}]
+2026-07-29 16:18:54 - Raw: [2,3,1] | Formatted: [{"id":2,"type":"user"},{"id":3,"type":"user"},{"id":1,"type":"user"}]
+2026-07-29 16:31:26 - Raw: [2] | Formatted: [{"id":2,"type":"user"}]
+2026-07-29 16:57:08 - Raw: [2] | Formatted: [{"id":2,"type":"user"}]

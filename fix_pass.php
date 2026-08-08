@@ -1,0 +1,1 @@
+php -r '$db = new PDO("mysql:host=127.0.0.1;dbname=tourmanager", "touruser", "password123"); $hash = password_hash("password123", PASSWORD_BCRYPT); $db->exec("UPDATE users SET password_hash = \"$hash\""); echo "Mots de passe mis a jour avec succes!\n";'
