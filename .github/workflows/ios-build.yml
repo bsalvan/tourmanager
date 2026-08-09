@@ -29,7 +29,23 @@ jobs:
           rm -rf ios
           npx cap add ios || true
           
-          # Injection d'un Podfile blindé avec une cible iOS 16.0 pour tout le projet
+          # 1. Forcer la cible iOS à 16.0 directement dans le projet Xcode principal (pbxproj)
+          python3 - << 'EOF'
+          import re
+          pbxproj_path = 'ios/App/App.xcodeproj/project.pbxproj'
+          try:
+              with open(pbxproj_path, 'r') as f:
+                  content = f.read()
+              # Remplacer toutes les occurrences d'ancienne cible par 16.0
+              new_content = re.sub(r'IPHONEOS_DEPLOYMENT_TARGET = 1[2-4]\.\d;', 'IPHONEOS_DEPLOYMENT_TARGET = 16.0;', content)
+              with open(pbxproj_path, 'w') as f:
+                  f.write(new_content)
+              print("Projet Xcode mis à jour avec succès à 16.0")
+          except Exception as e:
+              print(f"Erreur lors de la mise à jour du pbxproj: {e}")
+          EOF
+          
+          # 2. Injecter un Podfile blindé
           cat << 'EOF' > ios/App/Podfile
           require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
 
@@ -59,7 +75,7 @@ jobs:
           end
           EOF
           
-          # Installation des pods et copie des assets
+          # 3. Installer les pods et copier les assets
           cd ios/App
           pod install --repo-update
           cd ../..
