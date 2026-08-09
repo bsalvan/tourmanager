@@ -26,50 +26,43 @@ jobs:
       - name: Setup iOS Platform
         run: |
           cd frontend
-          # Nettoyer l'ancien dossier ios pour repartir sur du propre
           rm -rf ios
           npx cap add ios
           
-          # Remplacer complètement le Podfile par une version blindée et compatible
-          node -e "
-            const fs = require('fs');
-            const podfilePath = 'ios/App/Podfile';
-            const content = \`require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
+          # Écriture propre du Podfile via cat (évite les erreurs de syntaxe YAML)
+          cat << 'EOF' > ios/App/Podfile
+          require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
 
-platform :ios, '15.0'
-use_frameworks!
+          platform :ios, '15.0'
+          use_frameworks!
 
-install! 'cocoapods', :disable_input_output_paths => true
+          install! 'cocoapods', :disable_input_output_paths => true
 
-def capacitor_pods
-  pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
-  pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
-end
+          def capacitor_pods
+            pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
+            pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+          end
 
-target 'App' do
-  capacitor_pods
-end
+          target 'App' do
+            capacitor_pods
+          end
 
-post_install do |installer|
-  assertDeploymentTarget(installer)
-  installer.generated_projects.each do |project|
-    project.targets.each do |target|
-      target.build_configurations.each do |config|
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
-      end
-    end
-  end
-end
-\`;
-            fs.writeFileSync(podfilePath, content, 'utf8');
-          "
+          post_install do |installer|
+            assertDeploymentTarget(installer)
+            installer.generated_projects.each do |project|
+              project.targets.each do |target|
+                target.build_configurations.each do |config|
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+                end
+              end
+            end
+          end
+          EOF
           
-          # Lancer l'installation des pods avec mise à jour du dépôt
+          # Installation des pods et copie des assets
           cd ios/App
           pod install --repo-update
           cd ../..
-          
-          # Copier les assets web
           npx cap copy ios
 
       - name: Build iOS App
