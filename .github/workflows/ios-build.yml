@@ -27,6 +27,8 @@ jobs:
         run: |
           cd frontend
           npx cap add ios || true
+          # Forcer la cible iOS à 14.0 minimum pour Capacitor 7
+          sed -i '' "s/platform :ios, '.*'/platform :ios, '14.0'/" ios/App/Podfile
           npx cap sync ios
 
       - name: Build iOS App
