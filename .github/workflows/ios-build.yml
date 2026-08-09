@@ -1,32 +1,35 @@
-name: Build IPS App
+name: Build iOS App
+
 on:
-	push:
-	  branches: [ "main", "master"]
+  push:
+    branches: [ "main", "master" ]
+
 jobs:
-	build:
-	  runs-on: macos-latest
-	steps
-	  - name: Checkout Code
-	    uses: actions/checkout@v4
+  build:
+    runs-on: macos-latest
 
-	  - name: Setup Node.js
-	    uses: actions/setup-node@v4
-	    with:
-	       node-version: 18
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-	  - name: Install dependencies & Build Web
-	    run: |
-	      npm install
-	      npm run build
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-	  - name: Setup Capacitoe IOS
-	    run: |
-	      cd frontend
-	      npx cap sync ios
+      - name: Install dependencies & Build Web
+        run: |
+          cd frontend
+          npm install
+          npm run build
 
-	  - name: Build IOS App (Debug)
-	    run: |
-	      cd frontend/android
-	      cd ../ios/App
-	      xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+      - name: Add iOS platform if missing
+        run: |
+          cd frontend
+          npx cap add ios || true
+          npx cap sync ios
 
+      - name: Build iOS App
+        run: |
+          cd frontend/ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
