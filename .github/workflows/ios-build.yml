@@ -28,29 +28,31 @@ jobs:
           cd frontend
           rm -rf ios
           
-          # 1. On initialise d'abord la plateforme iOS
-          npx cap add ios
+          # On crée d'abord le dossier ios via une commande qui ne bloque pas ou on gère l'erreur du pod install auto
+          # Alternative : npx cap add ios lance pod install qui échoue. On peut autoriser l'échec pour corriger juste après.
+          npx cap add ios || true
           
-          # 2. On force immédiatement la version iOS à 16.0 dans le Podfile généré
+          # Maintenant que le Podfile existe (même si le pod install a échoué), on force la version à 16.0 (ou 17.0 si nécessaire)
           python3 - << 'EOF'
           import re
           path = 'ios/App/Podfile'
-          with open(path, 'r') as f:
-              content = f.read()
-          
-          # Remplacement de la version cible par 16.0
-          new_content = re.sub(r"platform\s+:ios,\s*['\"].*?['\"]", "platform :ios, '16.0'", content)
-          
-          with open(path, 'w') as f:
-              f.write(new_content)
+          try:
+              with open(path, 'r') as f:
+                  content = f.read()
+              # Remplacement de la version cible par 17.0 pour être sûr de couvrir les dernières versions de Capacitor
+              new_content = re.sub(r"platform\s+:ios,\s*['\"].*?['\"]", "platform :ios, '17.0'", content)
+              with open(path, 'w') as f:
+                  f.write(new_content)
+          except FileNotFoundError:
+              print("Podfile non trouvé")
           EOF
           
-          # 3. On relance proprement le pod install avec la bonne version cette fois
+          # On lance ensuite un vrai pod install propre avec la bonne version
           cd ios/App
           pod install --repo-update
           cd ../..
           
-          # 4. Copie des assets web
+          # Copie des assets web
           npx cap copy ios
 
 
