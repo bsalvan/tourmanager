@@ -23,17 +23,19 @@ jobs:
           npm install
           npm run build
 
-      - name: Add iOS platform if missing
+      - name: Setup iOS Platform
         run: |
           cd frontend
-          npx cap add ios || true
+          # Nettoyer l'ancien dossier ios pour éviter le conflit "already exists"
+          rm -rf ios
+          npx cap add ios
           
-          # Forcer proprement la cible iOS à 14.0 dans le Podfile via Node.js (infaillible)
+          # Forcer la cible iOS à 15.0 (requis par les versions récentes de Capacitor)
           node -e "
             const fs = require('fs');
             const p = 'ios/App/Podfile';
             let content = fs.readFileSync(p, 'utf8');
-            content = content.replace(/platform\s+:ios,\s*['\"].*['\"]/, \"platform :ios, '14.0'\");
+            content = content.replace(/platform\s+:ios,\s*['\"].*['\"]/, \"platform :ios, '15.0'\");
             fs.writeFileSync(p, content, 'utf8');
           "
           
@@ -42,6 +44,9 @@ jobs:
           pod install --repo-update
           cd ../..
           
+          # Copier les assets web
+          npx cap copy ios
+
           # Copier les assets web
           npx cap copy ios
 
