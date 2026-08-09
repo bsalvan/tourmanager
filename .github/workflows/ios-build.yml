@@ -26,27 +26,49 @@ jobs:
       - name: Setup iOS Platform
         run: |
           cd frontend
-          # Nettoyer l'ancien dossier ios pour éviter le conflit "already exists"
+          # Nettoyer l'ancien dossier ios pour repartir sur du propre
           rm -rf ios
           npx cap add ios
           
-          # Forcer la cible iOS à 15.0 (requis par les versions récentes de Capacitor)
+          # Remplacer complètement le Podfile par une version blindée et compatible
           node -e "
             const fs = require('fs');
-            const p = 'ios/App/Podfile';
-            let content = fs.readFileSync(p, 'utf8');
-            content = content.replace(/platform\s+:ios,\s*['\"].*['\"]/, \"platform :ios, '15.0'\");
-            fs.writeFileSync(p, content, 'utf8');
+            const podfilePath = 'ios/App/Podfile';
+            const content = \`require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
+
+platform :ios, '15.0'
+use_frameworks!
+
+install! 'cocoapods', :disable_input_output_paths => true
+
+def capacitor_pods
+  pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+end
+
+target 'App' do
+  capacitor_pods
+end
+
+post_install do |installer|
+  assertDeploymentTarget(installer)
+  installer.generated_projects.each do |project|
+    project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      end
+    end
+  end
+end
+\`;
+            fs.writeFileSync(podfilePath, content, 'utf8');
           "
           
-          # Mettre à jour les pods avec --repo-update
+          # Lancer l'installation des pods avec mise à jour du dépôt
           cd ios/App
           pod install --repo-update
           cd ../..
           
-          # Copier les assets web
-          npx cap copy ios
-
           # Copier les assets web
           npx cap copy ios
 
