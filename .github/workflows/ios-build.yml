@@ -29,8 +29,19 @@ jobs:
           rm -rf ios
           npx cap add ios
           
-          # Modification propre de la version iOS dans le Podfile existant
-          python3 -c "import re; p='ios/App/Podfile'; c=open(p).read(); open(p,'w').write(re.sub(r'platform\s+:ios,\s*[\'\()].*?[\'\)]', \"platform :ios, '15.0'\", c))"
+          # Script Python propre via entrée standard (évite tous les conflits YAML)
+          python3 - << 'EOF'
+          import re
+          path = 'ios/App/Podfile'
+          with open(path, 'r') as f:
+              content = f.read()
+          
+          # Remplacement de la version iOS cible par 15.0
+          new_content = re.sub(r"platform\s+:ios,\s*['\"].*?['\"]", "platform :ios, '15.0'", content)
+          
+          with open(path, 'w') as f:
+              f.write(new_content)
+          EOF
           
           # Installation des pods et copie des assets
           cd ios/App
