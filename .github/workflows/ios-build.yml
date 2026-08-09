@@ -28,30 +28,31 @@ jobs:
           cd frontend
           rm -rf ios
           
-          # Ajouter la plateforme iOS SANS lancer pod install automatiquement
-          npx cap add ios --no-dependencies
+          # 1. On initialise d'abord la plateforme iOS
+          npx cap add ios
           
-          # Mettre à jour la cible iOS à 16.0 dans le Podfile via Python
+          # 2. On force immédiatement la version iOS à 16.0 dans le Podfile généré
           python3 - << 'EOF'
           import re
           path = 'ios/App/Podfile'
           with open(path, 'r') as f:
               content = f.read()
           
-          # Remplacement de la version iOS cible par 16.0
+          # Remplacement de la version cible par 16.0
           new_content = re.sub(r"platform\s+:ios,\s*['\"].*?['\"]", "platform :ios, '16.0'", content)
           
           with open(path, 'w') as f:
               f.write(new_content)
           EOF
           
-          # Installation propre des pods avec la bonne version cible
+          # 3. On relance proprement le pod install avec la bonne version cette fois
           cd ios/App
           pod install --repo-update
           cd ../..
           
-          # Copier les assets web
+          # 4. Copie des assets web
           npx cap copy ios
+
 
 
       - name: Build iOS App
