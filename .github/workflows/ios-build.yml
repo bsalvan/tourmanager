@@ -29,20 +29,18 @@ jobs:
           rm -rf ios
           npx cap add ios || true
           
-          # 1. Forcer la cible iOS à 16.0 directement dans le projet Xcode principal (pbxproj)
+          # 1. Forcer la cible iOS à 16.0 dans le pbxproj
           python3 - << 'EOF'
           import re
           pbxproj_path = 'ios/App/App.xcodeproj/project.pbxproj'
           try:
               with open(pbxproj_path, 'r') as f:
                   content = f.read()
-              # Remplacer toutes les occurrences d'ancienne cible par 16.0
               new_content = re.sub(r'IPHONEOS_DEPLOYMENT_TARGET = 1[2-4]\.\d;', 'IPHONEOS_DEPLOYMENT_TARGET = 16.0;', content)
               with open(pbxproj_path, 'w') as f:
                   f.write(new_content)
-              print("Projet Xcode mis à jour avec succès à 16.0")
           except Exception as e:
-              print(f"Erreur lors de la mise à jour du pbxproj: {e}")
+              print(e)
           EOF
           
           # 2. Injecter un Podfile blindé
@@ -75,7 +73,6 @@ jobs:
           end
           EOF
           
-          # 3. Installer les pods et copier les assets
           cd ios/App
           pod install --repo-update
           cd ../..
@@ -84,4 +81,11 @@ jobs:
       - name: Build iOS App
         run: |
           cd frontend/ios/App
-          xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+          # On compile en Release
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphonesimulator -derivedDataPath Build
+          
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-artifact
+          path: frontend/ios/App/Build/Build/Products/Release-iphonesimulator/
