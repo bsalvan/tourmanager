@@ -29,29 +29,43 @@ jobs:
           rm -rf ios
           npx cap add ios || true
           
-          # Forcer la version cible à 17.0
-          python3 - << 'EOF'
-          import re
-          path = 'ios/App/Podfile'
-          try:
-              with open(path, 'r') as f:
-                  content = f.read()
-              new_content = re.sub(r"platform\s+:ios,\s*['\"].*?['\"]", "platform :ios, '17.0'", content)
-              with open(path, 'w') as f:
-                  f.write(new_content)
-          except FileNotFoundError:
-              pass
+          # Injection d'un Podfile blindé avec une cible iOS 16.0 pour tout le projet
+          cat << 'EOF' > ios/App/Podfile
+          require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
+
+          platform :ios, '16.0'
+          use_frameworks!
+
+          install! 'cocoapods', :disable_input_output_paths => true
+
+          def capacitor_pods
+            pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
+            pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+          end
+
+          target 'App' do
+            capacitor_pods
+          end
+
+          post_install do |installer|
+            assertDeploymentTarget(installer)
+            installer.generated_projects.each do |project|
+              project.targets.each do |target|
+                target.build_configurations.each do |config|
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+                end
+              end
+            end
+          end
           EOF
           
-          # Installer les pods DANS le dossier ios/App
+          # Installation des pods et copie des assets
           cd ios/App
           pod install --repo-update
           cd ../..
-          
           npx cap copy ios
 
       - name: Build iOS App
         run: |
           cd frontend/ios/App
-          # On s'assure d'utiliser le workspace généré par CocoaPods
           xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
