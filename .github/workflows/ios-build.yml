@@ -27,37 +27,31 @@ jobs:
         run: |
           cd frontend
           rm -rf ios
-          
-          # On crée d'abord le dossier ios via une commande qui ne bloque pas ou on gère l'erreur du pod install auto
-          # Alternative : npx cap add ios lance pod install qui échoue. On peut autoriser l'échec pour corriger juste après.
           npx cap add ios || true
           
-          # Maintenant que le Podfile existe (même si le pod install a échoué), on force la version à 16.0 (ou 17.0 si nécessaire)
+          # Forcer la version cible à 17.0
           python3 - << 'EOF'
           import re
           path = 'ios/App/Podfile'
           try:
               with open(path, 'r') as f:
                   content = f.read()
-              # Remplacement de la version cible par 17.0 pour être sûr de couvrir les dernières versions de Capacitor
               new_content = re.sub(r"platform\s+:ios,\s*['\"].*?['\"]", "platform :ios, '17.0'", content)
               with open(path, 'w') as f:
                   f.write(new_content)
           except FileNotFoundError:
-              print("Podfile non trouvé")
+              pass
           EOF
           
-          # On lance ensuite un vrai pod install propre avec la bonne version
+          # Installer les pods DANS le dossier ios/App
           cd ios/App
           pod install --repo-update
           cd ../..
           
-          # Copie des assets web
           npx cap copy ios
-
-
 
       - name: Build iOS App
         run: |
           cd frontend/ios/App
+          # On s'assure d'utiliser le workspace généré par CocoaPods
           xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
