@@ -10,10 +10,18 @@ class EmailService
 
     public function __construct()
     {
-        // Récupération des paramètres via .env ou variables d'environnement
-        $this->apiKey = $_ENV['BREVO_API_KEY'] ?? getenv('BREVO_API_KEY') ?: '';
-        $this->senderEmail = $_ENV['BREVO_SENDER_EMAIL'] ?? getenv('BREVO_SENDER_EMAIL') ?: 'contact@roadline.com';
-        $this->senderName = $_ENV['BREVO_SENDER_NAME'] ?? getenv('BREVO_SENDER_NAME') ?: 'Roadline MGT';
+        $envFile = '/var/www/tour-app/backend/.env';
+        $env = parse_ini_file($envFile);
+        
+        // Debug rapide
+        if (empty($env['BREVO_API_KEY'])) {
+            error_log("DEBUG: Clé vide. Contenu env: " . print_r($env, true));
+        }
+        
+        // Récupération des paramètres via $_ENV, getenv ou lecture directe du .env
+        $this->apiKey = $_ENV['BREVO_API_KEY'] ?? getenv('BREVO_API_KEY') ?? ($env['BREVO_API_KEY'] ?? '');
+        $this->senderEmail = $_ENV['BREVO_SENDER_EMAIL'] ?? getenv('BREVO_SENDER_EMAIL') ?? ($env['BREVO_SENDER_EMAIL'] ?? 'contact@roadline.com');
+        $this->senderName = $_ENV['BREVO_SENDER_NAME'] ?? getenv('BREVO_SENDER_NAME') ?? ($env['BREVO_SENDER_NAME'] ?? 'Roadline MGT');
     }
 
     /**
